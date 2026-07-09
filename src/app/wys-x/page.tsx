@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Map, Share2, Shield, Smartphone } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import DownloadButtons from '@/components/download/DownloadButtons'
 
 export default function WysXPage() {
   return (
@@ -30,6 +31,13 @@ export default function WysXPage() {
           >
             The next generation of location-based social networking. Discover, connect, and share like never before.
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <DownloadButtons />
+          </motion.div>
         </div>
       </section>
 
@@ -104,22 +112,9 @@ export default function WysXPage() {
         <div className="container mx-auto px-4 relative z-10">
           <h2 className="text-4xl font-bold mb-8">Ready to join the movement?</h2>
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
-            <a 
-              href="#" 
-              className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all flex items-center gap-3 border border-white/10 hover:border-neon-purple"
-            >
-              <Smartphone className="w-6 h-6" />
-              <span>Download for iOS</span>
-            </a>
-            <a 
-              href="#" 
-              className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all flex items-center gap-3 border border-white/10 hover:border-neon-orange"
-            >
-              <Smartphone className="w-6 h-6" />
-              <span>Download for Android</span>
-            </a>
-            <a 
-              href="https://wysx1.vercel.app/home" 
+            <DownloadButtons />
+            <a
+              href="https://wysx1.vercel.app/home"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-neon-purple hover:bg-fuchsia-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-[0_0_20px_rgba(213,0,249,0.3)] hover:shadow-[0_0_40px_rgba(213,0,249,0.5)] flex items-center gap-3"
