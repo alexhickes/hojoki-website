@@ -57,11 +57,14 @@ export default function AndroidInstall({ release }: AndroidInstallProps) {
 
   if (target.mode === 'apk' && release) {
     const size = formatSize(release.sizeBytes)
+    // Fixed locale + zone so server and client render the same string
+    // (a locale-dependent format caused a hydration mismatch).
     const released = release.releasedAt
-      ? new Date(release.releasedAt).toLocaleDateString(undefined, {
+      ? new Date(release.releasedAt).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
           year: 'numeric',
+          timeZone: 'UTC',
         })
       : ''
     return (
