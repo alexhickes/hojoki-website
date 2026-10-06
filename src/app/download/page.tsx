@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { detectPlatform } from '@/lib/platform'
+import { fetchAndroidRelease } from '@/lib/androidRelease'
 import DownloadClient from '@/components/download/DownloadClient'
 
 // Basic metadata so the route is indexable and shareable. OG image + richer
@@ -18,5 +19,14 @@ export default async function DownloadPage() {
   const ua = requestHeaders.get('user-agent') ?? ''
   const initial = detectPlatform(ua)
 
-  return <DownloadClient initialPlatform={initial.platform} />
+  // Newest Android build (version, size, notes) from hojoki/wysx-releases;
+  // null until the first release is published or if GitHub is unreachable.
+  const androidRelease = await fetchAndroidRelease()
+
+  return (
+    <DownloadClient
+      initialPlatform={initial.platform}
+      androidRelease={androidRelease}
+    />
+  )
 }
