@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Download, ShieldCheck } from 'lucide-react'
 import { downloadConfig, resolveDownload } from '@/lib/downloadConfig'
-import { formatSize, type AndroidRelease } from '@/lib/androidRelease'
+import {
+  formatSize,
+  type AndroidAbi,
+  type AndroidRelease,
+} from '@/lib/androidRelease'
 
 // Minimal typing for the non-standard beforeinstallprompt event.
 interface BeforeInstallPromptEvent extends Event {
@@ -18,6 +22,13 @@ interface AndroidInstallProps {
 
 const primaryButton =
   'inline-flex items-center gap-3 bg-neon-purple hover:bg-fuchsia-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-[0_0_20px_rgba(213,0,249,0.3)] hover:shadow-[0_0_40px_rgba(213,0,249,0.5)]'
+
+// Secondary per-ABI downloads (hojoki/wysx-app#519). The primary button stays
+// the arm64-v8a build every modern phone runs; these cover the rest.
+const otherAbis: { abi: AndroidAbi; label: string; hint: string }[] = [
+  { abi: 'armeabi-v7a', label: '32-bit ARM', hint: 'older 32-bit phones' },
+  { abi: 'x86_64', label: 'Intel / AMD 64-bit', hint: 'emulators / Chromebooks' },
+]
 
 // Android install branch. Modes (see downloadConfig):
 //   apk   — direct download of the signed APK (no Play Store yet), with a
@@ -67,6 +78,12 @@ export default function AndroidInstall({ release }: AndroidInstallProps) {
           timeZone: 'UTC',
         })
       : ''
+    // Only ABIs the manifest actually lists; none (pre-#519 manifest) means
+    // the page renders exactly as before.
+    const otherDownloads = otherAbis.flatMap(({ abi, label, hint }) => {
+      const apk = release.apks[abi]
+      return apk ? [{ abi, label, hint, apk }] : []
+    })
     return (
       <div className="text-center max-w-xl mx-auto">
         <h1 className="text-4xl font-bold mb-4">Get Wys X for Android</h1>
@@ -85,6 +102,11 @@ export default function AndroidInstall({ release }: AndroidInstallProps) {
             .filter(Boolean)
             .join(' · ')}
         </p>
+        {release.apks['arm64-v8a'] && (
+          <p className="text-gray-500 text-sm mt-1">
+            For most phones (64-bit ARM, arm64-v8a).
+          </p>
+        )}
 
         <ol className="text-left text-gray-300 mt-10 space-y-4 list-decimal list-inside">
           <li>
@@ -108,6 +130,38 @@ export default function AndroidInstall({ release }: AndroidInstallProps) {
             <code className="break-all text-gray-400">{release.sha256}</code>.
           </p>
         </div>
+
+        {otherDownloads.length > 0 && (
+          <div className="mt-10 text-left">
+            <h2 className="text-sm font-semibold text-gray-300 mb-3">
+              Other Android devices
+            </h2>
+            <ul className="space-y-3 text-sm">
+              {otherDownloads.map(({ abi, label, hint, apk }) => (
+                <li key={abi} className="text-gray-400">
+                  <a
+                    href={apk.url}
+                    className="inline-flex items-center gap-2 text-neon-purple hover:underline font-medium"
+                    download
+                  >
+                    <Download className="w-4 h-4" />
+                    {label} ({abi})
+                  </a>{' '}
+                  &mdash; {hint}
+                  {apk.sizeBytes ? ` · ${formatSize(apk.sizeBytes)}` : ''}
+                  <span className="block text-xs text-gray-500 mt-1">
+                    SHA-256{' '}
+                    <code className="break-all text-gray-400">{apk.sha256}</code>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-gray-500 text-xs mt-3">
+              Not sure? Use the main button &mdash; it works on almost every
+              modern phone.
+            </p>
+          </div>
+        )}
 
         <p className="text-gray-500 text-sm mt-8">
           Prefer not to install an APK?{' '}
