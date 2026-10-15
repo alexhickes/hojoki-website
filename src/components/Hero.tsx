@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Download } from 'lucide-react'
 
 export default function Hero() {
   return (
@@ -34,6 +35,12 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex flex-col md:flex-row gap-4 justify-center items-center"
         >
+          <Link
+            href="/download"
+            className="bg-neon-orange hover:bg-orange-600 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,109,0,0.3)] hover:shadow-[0_0_30px_rgba(255,109,0,0.5)]"
+          >
+            <Download className="w-5 h-5" /> Download Wys X
+          </Link>
           <button className="bg-neon-orange hover:bg-orange-600 text-white px-8 py-3 rounded-full font-semibold text-lg transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,109,0,0.3)] hover:shadow-[0_0_30px_rgba(255,109,0,0.5)]">
             Get Started <ArrowRight className="w-5 h-5" />
           </button>
