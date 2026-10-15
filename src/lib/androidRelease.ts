@@ -3,7 +3,22 @@
 // hojoki/wysx-releases. Shape is owned by wysx-app `scripts/build_android.sh`;
 // the in-app updater reads the same file. See hojoki/wysx-app#490.
 
-import { downloadConfig, resolveDownload } from './downloadConfig'
+import {
+  androidReleasesRepoUrl,
+  downloadConfig,
+  resolveDownload,
+} from './downloadConfig'
+
+/** CPU ABIs the release workflow builds one APK for (hojoki/wysx-app#519). */
+export const ANDROID_ABIS = ['arm64-v8a', 'armeabi-v7a', 'x86_64'] as const
+export type AndroidAbi = (typeof ANDROID_ABIS)[number]
+
+/** One per-ABI APK from the manifest's additive `apks` map. */
+export interface AndroidApkVariant {
+  url: string
+  sha256: string
+  sizeBytes: number
+}
 
 export interface AndroidRelease {
   versionName: string
@@ -14,6 +29,8 @@ export interface AndroidRelease {
   releasedAt: string
   minSupportedVersionCode: number
   notes: string
+  /** Per-ABI APKs. Empty when the manifest predates #519 (no `apks` map). */
+  apks: Partial<Record<AndroidAbi, AndroidApkVariant>>
 }
 
 /** How long a rendered page may keep showing a previous release's details. */
@@ -31,6 +48,34 @@ function isRelease(value: unknown): value is AndroidRelease {
     typeof v.sha256 === 'string' &&
     /^[0-9a-f]{64}$/i.test(v.sha256)
   )
+}
+
+// Only accept per-ABI links that point at the releases repo, so a malformed
+// manifest can never turn a download link into an arbitrary URL.
+const releaseAssetPrefix = `${androidReleasesRepoUrl}/releases/download/`
+
+function parseApks(value: unknown): AndroidRelease['apks'] {
+  const apks: AndroidRelease['apks'] = {}
+  if (!value || typeof value !== 'object') return apks
+  const map = value as Record<string, unknown>
+  for (const abi of ANDROID_ABIS) {
+    const entry = map[abi]
+    if (!entry || typeof entry !== 'object') continue
+    const e = entry as Record<string, unknown>
+    if (
+      typeof e.url === 'string' &&
+      e.url.startsWith(releaseAssetPrefix) &&
+      typeof e.sha256 === 'string' &&
+      /^[0-9a-f]{64}$/i.test(e.sha256)
+    ) {
+      apks[abi] = {
+        url: e.url,
+        sha256: e.sha256,
+        sizeBytes: typeof e.sizeBytes === 'number' ? e.sizeBytes : 0,
+      }
+    }
+  }
+  return apks
 }
 
 /**
@@ -58,6 +103,7 @@ export async function fetchAndroidRelease(): Promise<AndroidRelease | null> {
           ? json.minSupportedVersionCode
           : 1,
       notes: typeof json.notes === 'string' ? json.notes : '',
+      apks: parseApks((json as unknown as Record<string, unknown>).apks),
     }
   } catch {
     return null
